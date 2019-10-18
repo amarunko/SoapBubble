@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
     s.license      = 'MIT'
     s.authors      = {'ChaselAn' => '865770853@qq.com'}
     s.platform     = :ios, '9.0'
-    s.source       = {:git => 'git@github.com:amarunko/SoapBubble.git', :tag => s.version}
+    s.source       = {:git => 'https://github.com/amarunko/SoapBubble.git', :tag => s.version}
     s.source_files = 'SoapBubble/*.swift'
     s.requires_arc = true
     s.swift_version = '5.0'
