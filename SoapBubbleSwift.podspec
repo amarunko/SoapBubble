@@ -9,5 +9,6 @@ Pod::Spec.new do |s|
     s.source       = {:git => 'git@github.com:amarunko/SoapBubble.git', :tag => s.version}
     s.source_files = 'SoapBubble/*.swift'
     s.requires_arc = true
+    s.swift_version = '5.0'
     s.dependency 'Texture'
 end
