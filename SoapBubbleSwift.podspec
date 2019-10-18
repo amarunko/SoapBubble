@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-    s.name         = 'SoapBubble'
+    s.name         = 'SoapBubbleSwift'
     s.version      = '0.1.5'
     s.summary      = 'Let your cell slip like a soap'
     s.homepage     = 'https://github.com/ChaselAn/SwipableCell'
