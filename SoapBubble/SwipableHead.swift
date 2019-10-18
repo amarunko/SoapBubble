@@ -77,32 +77,19 @@ class SwipableActionHead {
         case showAnimate(IsConfirming, AnimationToOffsetX, AnimationInitialVelocity, AnimationCompletion?)
     }
 
-//    enum Command {
-//        case show
-//        case setProgress(ActionViewOffsetX)
-//        case reset
-//        case hide(HideAnimated, HideCompletion?)
-//        case hideAnimate(AnimationDuration, IsConfirming, AnimationCompletion?)
-//        case showAnimate
-//    }
-
     private(set) lazy var brain = Brain<State, Message, Message>(state: .hidden) { [unowned self] (state, message) -> (State, Message?) in
         let nextState: State
         var command: Message? = message
         switch message {
         case .show:
             nextState = .showing
-//            command = .show
         case .setProgress(let offsetX):
             nextState = .showing
-//            command = .setProgress(offsetX)
         case .reset:
             nextState = .hidden
-//            command = .reset
         case .hide(let animated, let completion):
             if state == .showing {
                 nextState = .hiding
-//                command = .hide(animated, completion)
             } else {
                 nextState = state
                 command = nil
@@ -113,10 +100,8 @@ class SwipableActionHead {
             } else {
                 nextState = .hidden
             }
-//            command = .hideAnimate()
         case .showAnimate:
             nextState = .showing
-//            command = .showAnimate
         }
         return (nextState, command)
     }

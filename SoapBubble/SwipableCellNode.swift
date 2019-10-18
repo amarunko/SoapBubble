@@ -45,11 +45,13 @@ open class SwipableCellNode: ASCellNode {
 
         clipsToBounds = false
 
-        view.addGestureRecognizer(panGestureRecognizer)
-        view.addGestureRecognizer(tapGestureRecognizer)
+        ASMainSerialQueue().performBlock {
+            self.view.addGestureRecognizer(self.panGestureRecognizer)
+            self.view.addGestureRecognizer(self.tapGestureRecognizer)
 
-        tableNode.view.panGestureRecognizer.removeTarget(self, action: nil)
-        tableNode.view.panGestureRecognizer.addTarget(self, action: #selector(tableViewDidPan))
+            tableNode.view.panGestureRecognizer.removeTarget(self, action: nil)
+            tableNode.view.panGestureRecognizer.addTarget(self, action: #selector(self.tableViewDidPan))
+        }
 
         head.brain.subscribe { [weak self] (command) in
             guard let strongSelf = self else { return }
@@ -211,7 +213,9 @@ extension SwipableCellNode {
     @discardableResult
     private func showActionsView() -> Bool {
 
-        guard let tableNode = tableNode else { return false }
+        guard let tableNode = tableNode else {
+            return false
+        }
 
         super.isHighlighted = false
 
@@ -227,6 +231,7 @@ extension SwipableCellNode {
 
         let actions = source.swipe_tableNode(tableNode, editActionsOptionsForRowAt: indexPath)
         let actionsView = ActionsView(actions: actions)
+        actionsView.delegate = self
         actionsView.leftMoveWhenConfirm = { [weak self] in
 
             guard let strongSelf = self else { return }
@@ -264,9 +269,11 @@ extension SwipableCellNode {
                 self?.actionHead.brain.dispatch(.reset)
             }))
         } else {
-            self.frame.origin = CGPoint(x: 0, y: self.frame.origin.y)
+            ASMainSerialQueue().performBlock {
+                self.frame.origin = CGPoint(x: 0, y: self.frame.origin.y)
+                self.layoutIfNeeded()
+            }
 
-            self.layoutIfNeeded()
             actionHead.brain.dispatch(.reset)
         }
     }
@@ -287,18 +294,13 @@ extension SwipableCellNode {
 
         let animator: SwipeAnimator = {
             if velocity > 0 {
-
                 return UIViewSpringAnimator(duration: duration, damping: 1.0, initialVelocity: velocity)
-
             } else {
-
                 return UIViewSpringAnimator(duration: duration, damping: 1.0)
-
             }
         }()
 
         animator.addAnimations({
-
             self.frame.origin = CGPoint(x: offset, y: self.frame.origin.y)
 
             if !isConfirming {
@@ -322,19 +324,24 @@ extension SwipableCellNode {
             animator?.stopAnimation(true)
         }
     }
-
 }
 
 extension SwipableCellNode: UIGestureRecognizerDelegate {
 
     override open func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
 
-        let swipeCells = tableNode?.visibleNodes.compactMap({ $0 as? SwipableCellNode }).filter({ $0.actionHead.brain.state == .showing || $0.actionHead.brain.state == .hiding })
+        let swipeCells = tableNode?.visibleNodes.compactMap({
+            $0 as? SwipableCellNode
+        }).filter({
+            $0.actionHead.brain.state == .showing || $0.actionHead.brain.state == .hiding
+        })
         if gestureRecognizer == panGestureRecognizer,
             let view = gestureRecognizer.view,
             let gestureRecognizer = gestureRecognizer as? UIPanGestureRecognizer {
             if actionHead.brain.state != .showing {
-                swipeCells?.forEach({ $0.hideSwipe(animated: true) })
+                swipeCells?.forEach({
+                    $0.hideSwipe(animated: true)
+                })
             }
             let translation = gestureRecognizer.translation(in: view)
             return abs(translation.y) <= abs(translation.x)
@@ -345,12 +352,20 @@ extension SwipableCellNode: UIGestureRecognizerDelegate {
                 return true
             }
             if swipeCells?.count != 0 {
-                swipeCells?.forEach({ $0.hideSwipe(animated: true) })
+                swipeCells?.forEach({
+                    $0.hideSwipe(animated: true)
+                })
                 return true
             }
             return false
         }
 
         return true
+    }
+}
+
+extension SwipableCellNode: ActionsViewDelegate {
+    func hideSwipeView() {
+        hideSwipe(animated: true)
     }
 }

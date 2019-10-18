@@ -8,12 +8,17 @@
 
 import UIKit
 
+protocol ActionsViewDelegate: AnyObject {
+    func hideSwipeView()
+}
+
 class ActionsView: UIView {
 
     private var actionViews: [ActionView] = []
 
     var preferredWidth: CGFloat = 0
     var isConfirming = false
+    weak var delegate: ActionsViewDelegate?
 
     var leftMoveWhenConfirm: (() -> Void)?
 
@@ -55,6 +60,10 @@ class ActionsView: UIView {
         actions.forEach({ $0.isEnabled = true })
     }
 
+    func hide() {
+        delegate?.hideSwipeView()
+    }
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -75,6 +84,7 @@ class ActionView: UIView {
     var toX: CGFloat = 0
 
     private var titleLabel = UILabel()
+    private var imageView = UIImageView()
     private let action: SwipedAction
     private var widthConstraint: NSLayoutConstraint?
     private var leadingConstraint: NSLayoutConstraint?
@@ -88,21 +98,35 @@ class ActionView: UIView {
         margin = action.horizontalMargin
         backgroundColor = action.backgroundColor
 
-        titleLabel.textColor = action.titleColor
-        titleLabel.textAlignment = .center
-        titleLabel.text = action.title
-        titleLabel.numberOfLines = 0
-        titleLabel.font = action.titleFont
+        if let image = action.image {
+            imageView.image = image
+            imageView.contentMode = .center
 
-        addSubview(titleLabel)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        leadingConstraint = titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: margin)
-        leadingConstraint?.isActive = true
-        titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
-        widthConstraint = titleLabel.widthAnchor.constraint(equalToConstant: widthConst - 2 * margin)
-        widthConstraint?.isActive = true
+            addSubview(imageView)
+            imageView.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+            leadingConstraint = imageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: margin)
+            leadingConstraint?.isActive = true
+            widthConstraint = imageView.widthAnchor.constraint(equalToConstant: widthConst - 2 * margin)
+            widthConstraint?.isActive = true
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+        } else {
+            titleLabel.textColor = action.titleColor
+            titleLabel.textAlignment = .center
+            titleLabel.text = action.title
+            titleLabel.numberOfLines = 0
+            titleLabel.font = action.titleFont
 
-        titleLabel.isUserInteractionEnabled = false
+            addSubview(titleLabel)
+
+            titleLabel.translatesAutoresizingMaskIntoConstraints = false
+            leadingConstraint = titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: margin)
+            leadingConstraint?.isActive = true
+            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+            widthConstraint = titleLabel.widthAnchor.constraint(equalToConstant: widthConst - 2 * margin)
+            widthConstraint?.isActive = true
+
+            titleLabel.isUserInteractionEnabled = false
+        }
 
         addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTap)))
         isUserInteractionEnabled = true
@@ -121,28 +145,34 @@ class ActionView: UIView {
             isConfirming = true
             beConfirm?()
             titleLabel.text = title
-            superview?.bringSubview(toFront: self)
+            superview?.bringSubviewToFront(self)
 
             UIView.animate(withDuration: 0.15, delay: 0, options: [.allowUserInteraction], animations: {
                 [weak self] in
-                guard let strongSelf = self else { return }
-                self?.frame.origin.x = 0
-                self?.widthConstraint?.constant = title.getWidth(withFont: strongSelf.action.titleFont)
-                if let superView = strongSelf.superview as? ActionsView {
-                    let deleteWidth = title.getWidth(withFont: strongSelf.action.titleFont) + 2 * strongSelf.margin
+                guard let self = self else {
+                    return
+                }
+                self.frame.origin.x = 0
+                self.widthConstraint?.constant = title.getWidth(withFont: self.action.titleFont)
+                if let superView = self.superview as? ActionsView {
+                    let deleteWidth = title.getWidth(withFont: self.action.titleFont) + 2 * self.margin
                     if superView.preferredWidth < deleteWidth {
                         superView.preferredWidth = deleteWidth
-                        strongSelf.leftMoveWhenConfirm?()
+                        self.leftMoveWhenConfirm?()
                     } else {
-                        strongSelf.leadingConstraint?.constant = (superView.preferredWidth - title.getWidth(withFont: strongSelf.action.titleFont)) / 2
+                        self.leadingConstraint?.constant = (superView.preferredWidth - title.getWidth(withFont: self.action.titleFont)) / 2
                     }
                 }
-                strongSelf.layoutIfNeeded()
+                self.layoutIfNeeded()
                 }, completion: { [weak self] (_) in
                     self?.confirmAnimationCompleted?()
             })
         } else {
             action.handler?(action)
+
+            if let superView = self.superview as? ActionsView, action.hideOnTap {
+                superView.hide()
+            }
         }
     }
 

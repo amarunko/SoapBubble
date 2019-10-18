@@ -23,6 +23,8 @@ public class SwipedAction {
     public var needConfirm = ConfirmStyle.none
     public var horizontalMargin: CGFloat = 10
     public var handler: ((SwipedAction) -> Void)?
+    public var image: UIImage?
+    public var hideOnTap = false
 
     public var isEnabled: Bool = true
 
@@ -31,7 +33,23 @@ public class SwipedAction {
         self.handler = handler
     }
 
-    public init(title: String, backgroundColor: UIColor, titleColor: UIColor, titleFont: UIFont, preferredWidth: CGFloat?, handler: ((SwipedAction) -> Void)?) {
+    public init(image: UIImage,
+                backgroundColor: UIColor,
+                preferredWidth: CGFloat?,
+                handler: ((SwipedAction) -> Void)?) {
+        self.title = ""
+        self.image = image
+        self.backgroundColor = backgroundColor
+        self.preferredWidth = preferredWidth
+        self.handler = handler
+    }
+
+    public init(title: String,
+                backgroundColor: UIColor,
+                titleColor: UIColor,
+                titleFont: UIFont,
+                preferredWidth: CGFloat?,
+                handler: ((SwipedAction) -> Void)?) {
         self.title = title
         self.backgroundColor = backgroundColor
         self.titleColor = titleColor
